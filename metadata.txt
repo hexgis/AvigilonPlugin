@@ -1,0 +1,42 @@
+;Required for QGIS >= 1.8.0. Contains general info, version, name and some other metadata used by plugins website
+;and plugin infrastructure. Since QGIS 2.0 the metadata from __init__.py are not accepted anymore and the metadata.txt is required.
+
+; the next section is mandatory
+
+[general]
+name=CameraViewer
+email=heltucosta@gmail.com
+author=Helton Jose de Almeida Costa
+qgisMinimumVersion=2.0
+description=This is a plugin that is able to access rtsp stream protocols
+    in order to display camera images inside qgis.
+about=The objective of this plugin is to give the possibility of mapping the position of
+    cameras around a determined region and being able to see their live images inside qgis.
+version=version 0.1
+tracker=http://bugs.itopen.it
+repository=http://www.itopen.it/repo
+; end of mandatory metadata
+
+; start of optional metadata
+category=Web
+changelog=
+    0.1 - Initial state
+
+; Tags are in comma separated value format, spaces are allowed within the
+; tag name.
+; Tags should be in English language. Please also check for existing tags and
+; synonyms before creating a new one.
+tags=Qt, vlc, qgis, camera, stream, rtsp, live, video
+
+; these metadata can be empty, they will eventually become mandatory.
+;homepage=http://www.itopen.it
+icon=icon.png
+
+; experimental flag (applies to the single version)
+experimental=True
+
+; deprecated flag (applies to the whole plugin and not only to the uploaded version)
+deprecated=False
+
+; if empty, it will be automatically set to major version + .99
+;qgisMaximumVersion=2.0
