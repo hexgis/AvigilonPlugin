@@ -63,5 +63,10 @@ class PluginController(QgsMapTool):
 
 
 def startStream(filename = 'rtsp://administrator:1234@192.168.0.66/defaultPrimary'):
-    player = Player(iface, filename)
-    player.start()
+    try:
+        iface.player
+    except AttributeError:
+        iface.player = Player(iface, filename)
+        #import time
+        #time.sleep(3)
+    iface.player.start()

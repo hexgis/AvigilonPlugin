@@ -9,8 +9,8 @@ import time
 
 class Player(QMainWindow):
     # A simple Media Player using VLC and Qt
-    def __init__(self, iface, filename, master=None):
-        QMainWindow.__init__(self, master)
+    def __init__(self, iface, filename):
+        QMainWindow.__init__(self)
         self.setWindowTitle("Media Player")
         self.filename = filename
         self.iface = iface
