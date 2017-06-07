@@ -38,11 +38,11 @@ class PluginController(QgsMapTool):
             if self.isCamera(event):
                 self.contextMenu.addAction(self.streamAction)
                 self.contextMenu.addAction(self.localAction)
-                self.contextMenu.addAction(self.infoAction)
+                #self.contextMenu.addAction(self.infoAction)
             else:
                 self.contextMenu.removeAction(self.streamAction)
                 self.contextMenu.removeAction(self.localAction)
-                self.contextMenu.removeAction(self.infoAction)
+                #self.contextMenu.removeAction(self.infoAction)
             self.lastClickPos = self.toMapCoordinates(event.pos())
             self.contextMenu.popup(event.globalPos())
 
@@ -111,9 +111,7 @@ class PluginController(QgsMapTool):
         msgBox = QMessageBox()
         text = "Ponto: " + self.selectedCamera.attributes[0] + "" \
             "Endereço: " +self.selectedCamera.attributes()[2] + "" \
-            "Bairro: " + self.selectedCamera.attributes()[3] + "" \
-            "Latitude: " + self.selectedCamera.attributes()[9] + "" \
-            "Longitude: " + self.selectedCamera.attributes()[8]
+            "Bairro: " + self.selectedCamera.attributes()[3]
         msgBox.setText(text)
         msgBox.setWindowTitle("Camera " + self.selectedCamera.attributes()[0])
         msgBox.exec_()
