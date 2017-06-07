@@ -29,9 +29,21 @@ class PluginController(QgsMapTool):
                     layerPoint = self.toMapCoordinates(layer, feature.geometry().asPoint())
                     if (mapPoint.x() >= layerPoint.x() - 150 and mapPoint.x() <= layerPoint.x() + 150) and (
                             mapPoint.y() >= layerPoint.y() - 150 and mapPoint.y() <= layerPoint.y() + 150):
-                        print("camera clicada")
-                        print(feature.attributes())
+                        #print("camera clicada")
+                        # print(feature.attributes())
                         startStream()
+        if event.button() == 2:
+            self.contextMenu = QMenu()
+            self.testeAction = QAction("teste", self)
+            self.contextMenu.addAction(self.testeAction)
+            self.connect(self.testeAction, SIGNAL("triggered()"), self.acaoTeste)
+            self.contextMenu.popup(event.globalPos())
+
+    def acaoTeste(self):
+        msgBox = QMessageBox()
+        msgBox.setText("teste")
+        msgBox.setWindowTitle("Teste titulo")
+        msgBox.exec_()
 
     def initGui(self):
         self.menu = QMenu(self.iface.mainWindow())
