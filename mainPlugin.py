@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import os.path
 from qgis.core import *
@@ -23,10 +24,12 @@ class PluginController(QgsMapTool):
         self.streamAction = QAction("Visualizar Camera", self)
         self.coordinatesAction = QAction("Visualizar Coordenadas", self)
         self.localAction = QAction("Visualizar Localizacao", self)
+        self.infoAction = QAction("informacoes gerais", self)
         self.contextMenu.addAction(self.coordinatesAction)
         self.connect(self.streamAction, SIGNAL("triggered()"), self.startStream)
         self.connect(self.coordinatesAction, SIGNAL("triggered()"), self.coordinatesDialog)
         self.connect(self.localAction, SIGNAL("triggered()"), self.localDialog)
+        self.connect(self.infoAction, SIGNAL("triggered()"), self.infoDialog)
 
     def canvasPressEvent(self, event):
         if event.button() == 1 and self.isCamera(event):
@@ -35,9 +38,11 @@ class PluginController(QgsMapTool):
             if self.isCamera(event):
                 self.contextMenu.addAction(self.streamAction)
                 self.contextMenu.addAction(self.localAction)
+                self.contextMenu.addAction(self.infoAction)
             else:
                 self.contextMenu.removeAction(self.streamAction)
                 self.contextMenu.removeAction(self.localAction)
+                self.contextMenu.removeAction(self.infoAction)
             self.lastClickPos = self.toMapCoordinates(event.pos())
             self.contextMenu.popup(event.globalPos())
 
@@ -101,3 +106,15 @@ class PluginController(QgsMapTool):
         msgBox.setText("Localizacao da camera: " + self.selectedCamera.attributes()[2])
         msgBox.setWindowTitle("Localizacao")
         msgBox.exec_()
+
+    def infoDialog(self):
+        msgBox = QMessageBox()
+        text = "Ponto: " + self.selectedCamera.attributes[0] + "" \
+            "Endereço: " +self.selectedCamera.attributes()[2] + "" \
+            "Bairro: " + self.selectedCamera.attributes()[3] + "" \
+            "Latitude: " + self.selectedCamera.attributes()[9] + "" \
+            "Longitude: " + self.selectedCamera.attributes()[8]
+        msgBox.setText(text)
+        msgBox.setWindowTitle("Camera " + self.selectedCamera.attributes()[0])
+        msgBox.exec_()
+
