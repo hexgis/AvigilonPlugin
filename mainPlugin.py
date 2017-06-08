@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os.path
+from os.path import expanduser
 from qgis.core import *
 from qgis.utils import iface
 from qgis.gui import QgsMapTool
