@@ -19,7 +19,8 @@ class MouseClick(QgsMapTool):
                 if feature.geometry().type() == QGis.Point:
                     mapPoint = self.toMapCoordinates(event.pos())
                     layerPoint = self.toMapCoordinates(layer, feature.geometry().asPoint())
-                    if (mapPoint.x() >= layerPoint.x() - 150 and mapPoint.x() <= layerPoint.x() + 150) and (mapPoint.y() >= layerPoint.y() - 150 and mapPoint.y() <= layerPoint.y() + 150):
+                    if (mapPoint.x() >= layerPoint.x() - 150 and mapPoint.x() <= layerPoint.x() + 150) \
+                    and (mapPoint.y() >= layerPoint.y() - 150 and mapPoint.y() <= layerPoint.y() + 150):
                         print("camera clicada")
                         print(feature.attributes())
                         self.afterClick.emit()

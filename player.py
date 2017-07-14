@@ -48,6 +48,15 @@ class Player(QMainWindow):
         self.stopbutton = QPushButton("Stop")
         self.hbuttonbox.addWidget(self.stopbutton)
         self.stopbutton.clicked.connect(self.Stop)
+        
+        self.zoominbutton = QPushButton("Zoom In")
+        self.hbuttonbox.addWidget(self.zoominbutton)
+        self.zoominbutton.clicked.connect(self.ZoomIn)
+        
+        self.zoomoutbutton = QPushButton("Zoom Out")
+        self.hbuttonbox.addWidget(self.zoomoutbutton)
+        self.zoomoutbutton.clicked.connect(self.ZoomOut)
+
 
         self.hbuttonbox.addStretch(1)
         self.volumeslider = QSlider(Qt.Horizontal, self)
@@ -103,7 +112,20 @@ class Player(QMainWindow):
         """
         self.mediaplayer.stop()
         self.playbutton.setText("Play")
+        print("Stopped")
 
+    def ZoomIn(self):
+        """Zoom in
+        """
+        print("Zooming In")
+        pass
+        
+    def ZoomOut(self):
+        """Zoom out
+        """
+        print("Zooming out")
+        pass
+        
     def OpenFile(self):
         """Open a media file in a MediaPlayer
         """
