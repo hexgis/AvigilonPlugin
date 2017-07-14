@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/plugins/cameraviewer" >
-      <file>icons/camera-viewer.png</file>
-      <file>icons/camera-finder.png</file>
-  </qresource>
-</RCC>
