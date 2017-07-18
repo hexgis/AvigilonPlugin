@@ -29,6 +29,11 @@ class PluginController(QgsMapTool):
 
         self.contextMenu = QMenu()
 
+        self.toolButton = QToolButton()
+        self.toolButton.setMenu(QMenu())
+        self.toolButton.setPopupMode(QToolButton.MenuButtonPopup)
+        self.iface.addToolBarWidget(self.toolButton)
+
         self.streamAction = QAction("Visualizar Camera", self)
         self.coordinatesAction = QAction("Visualizar Coordenadas", self)
         self.localAction = QAction("Visualizar Localizacao", self)
@@ -45,7 +50,7 @@ class PluginController(QgsMapTool):
         self.connect(self.AOIAction, SIGNAL("triggered()"), self.draw_aoi)
         self.connect(self.pointAction, SIGNAL("triggered()"), self.buffer_point_aoi)
 
-    def init(self, event):
+    def init(self):
         if not self.layers_dict:
             self.layers_dict = dict((k.name(),i) for i, k in enumerate(self.canvas.layers()))
             self.cameras_crs = self.canvas.layer(self.layers_dict['expansao']).crs().geographicCRSAuthId()  
@@ -53,7 +58,7 @@ class PluginController(QgsMapTool):
                 QgsCoordinateReferenceSystem(4674, QgsCoordinateReferenceSystem.PostgisCrsId))
 
     def canvasPressEvent(self, event):
-        self.init(event)
+        self.init()
         self.lastClickPos = self.toMapCoordinates(event.pos())
         if self.find_cameras_flag == True:
             self.executeFinder(event)
@@ -75,7 +80,7 @@ class PluginController(QgsMapTool):
     def isCamera(self, event):
         layer = self.canvas.layer(self.layers_dict['expansao'])
         mapPoint = self.toMapCoordinates(event.pos())
-        max_value = 0.001
+        max_value = 0.0013
 
         for feature in layer.getFeatures():
             layerPoint = feature.geometry().asPoint()
@@ -109,13 +114,31 @@ class PluginController(QgsMapTool):
         #self.CameraViewerAction.activated.connect(self.run) # ou usa um ou usa o outro de cima, nao precsa dos dois
 
         self.iface.addToolBarIcon(self.CameraViewerAction)
-        self.iface.addToolBarIcon(self.CameraFinderAction)
+        # self.iface.addToolBarIcon(self.CameraFinderAction)
 
         self.iface.addPluginToWebMenu("&Smarteye Plugins", self.CameraViewerAction)
         self.iface.addPluginToWebMenu("&Smarteye Plugins", self.CameraFinderAction)
 
         menuBar = self.iface.mainWindow().menuBar()
         menuBar.insertMenu(self.iface.firstRightStandardMenu().menuAction(), self.menu)
+
+        ####################
+        # submenu on camera finder - TOOLBUTTON
+        m = self.toolButton.menu()
+        m.addAction(self.CameraFinderAction)
+        self.toolButton.setDefaultAction(self.CameraFinderAction)
+        
+        # QObject.connect(self.actionRun, SIGNAL("triggered()"), self.run)
+        self.CameraFinderAOIAction = QAction(
+          QIcon(":/plugins/cameraviewer/icons/draw-aoi.png"), 
+          u"Desenhe a area de interesse", 
+          self.iface.mainWindow()
+        )
+        self.CameraFinderAOIAction.setWhatsThis(u"Desenhe a area de interesse")
+        m.addAction(self.CameraFinderAOIAction)
+        #self.iface.addPluginToMenu("&Plugin Reloader", self.CameraFinderAOIAction)
+        QObject.connect(self.CameraFinderAOIAction, SIGNAL("triggered()"), self.draw_aoi)
+    #############################
         
 
     def run(self):
@@ -164,19 +187,28 @@ class PluginController(QgsMapTool):
 
     ####    
     def draw_aoi(self):
+        if not self.camera_finder:
+            self.init()
+            self.camera_finder = CameraFinder(self.canvas, self.layers_dict, self.cameras_crs)
+
         self.AOI_type = 2
+
         if not self.rectangle_aoi:
-            self.rectangle_aoi = RectangleMapTool(self.canvas, self.layers_dict, self.cameras_crs)
+            self.rectangle_aoi = RectangleMapTool(self.canvas, self.layers_dict, self.cameras_crs, self.camera_finder)
         self.canvas.setMapTool(self.rectangle_aoi)
+        self.AOI_type = 1
 
     def buffer_point_aoi(self):
-        self.AOI_type = 1
+        self.init()
         if not self.camera_finder:
-            self.camera_finder = CameraFinder(self.canvas, self.layers_dict, self.cameras_crs)     
-        self.camera_finder.run_point_aoi(self.clicked_point)
+            self.camera_finder = CameraFinder(self.canvas, self.layers_dict, self.cameras_crs)
+
+        self.AOI_type = 1     
+        self.camera_finder.run(mapPoint=self.clicked_point)
         self.iface.mapCanvas().setMapTool(self) 
 
     def executeFinder(self, event):
+
         if event.button() == 1:
             self.clicked_point = self.toMapCoordinates(event.pos())
 

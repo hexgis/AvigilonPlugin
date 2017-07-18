@@ -7,7 +7,7 @@ from camera_finder import CameraFinder
 
 class RectangleMapTool(QgsMapToolEmitPoint):
 
-    def __init__(self, canvas, layers_dict, crs):
+    def __init__(self, canvas, layers_dict, crs, camera_finder):
         self.canvas = canvas
         QgsMapToolEmitPoint.__init__(self, self.canvas)
         self.rubberBand = QgsRubberBand(self.canvas, QGis.Polygon)
@@ -17,8 +17,8 @@ class RectangleMapTool(QgsMapToolEmitPoint):
 
         self.layers_dict = layers_dict
         self.cameras_crs = crs
-        self.camera_finder = None
-
+        self.camera_finder = camera_finder
+        
     def reset(self):
         self.startPoint = self.endPoint = None
         self.isEmittingPoint = False
@@ -31,38 +31,26 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.showRect(self.startPoint, self.endPoint)
 
     def draw_aoi(self):
-        if not self.camera_finder:
-            self.camera_finder = CameraFinder(self.canvas, self.layers_dict, self.cameras_crs)
-
-        self.camera_finder.remove_layers()
-
-        self.area_of_interest =  QgsVectorLayer('Polygon?crs='+self.cameras_crs, 'aoi_point' , "memory")
+        self.area_of_interest =  QgsVectorLayer('Polygon?crs='+self.cameras_crs, 'buffer_point' , "memory")
         provider = self.area_of_interest.dataProvider()
         feature = QgsFeature()
         feature.setGeometry(QgsGeometry.fromPolygon([self.point_list]))
         provider.addFeatures([feature])
-        QgsMapLayerRegistry.instance().addMapLayer(self.area_of_interest)
         self.area_of_interest.updateExtents()
-        self.area_of_interest.setLayerTransparency(50)
+        QgsMapLayerRegistry.instance().addMapLayer(self.area_of_interest)
+        self.area_of_interest.setLayerTransparency(40)
 
-
-        self.camera_finder.run_draw_aoi(self.area_of_interest)
-
-        
+        self.camera_finder.run(aoi=self.area_of_interest)
 
     def canvasReleaseEvent(self, e):
         self.isEmittingPoint = False
         r = self.rectangle()
-        # if r is not None:
-        #     print "Rectangle:", r.xMinimum(), r.yMinimum(), r.xMaximum(), r.yMaximum()
-
         self.draw_aoi()
         self.reset()
 
     def canvasMoveEvent(self, e):
         if not self.isEmittingPoint:
             return
-
         self.endPoint = self.toMapCoordinates(e.pos())
         self.showRect(self.startPoint, self.endPoint)
 
@@ -70,7 +58,6 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.rubberBand.reset(QGis.Polygon)
         if startPoint.x() == endPoint.x() or startPoint.y() == endPoint.y():
             return
-
         self.point_list = []
 
         point1 = QgsPoint(startPoint.x(), startPoint.y())
