@@ -14,9 +14,39 @@ class CameraFinder():
         self.buffer_layer = None
         self.area_of_interest = None
         self.selected_layer = None
+        self.all_cameras = True
         self.geometries = []
         self.cameras = self.canvas.layer(self.layers_dict['expansao'])
+        self.cameras_range = self.canvas.layer(self.layers_dict['alcance_expansao'])
 
+    def create_temp_layer(self, layer1, layer2, temp_name):
+        expansao = self.canvas.layer(self.layers_dict[layer1])
+        cameras = self.canvas.layer(self.layers_dict[layer2])
+
+        fields = expansao.pendingFields()
+
+        final_layer = QgsVectorLayer('Point?crs='+self.cameras_crs, temp_name, "memory")
+        provider = final_layer.dataProvider()
+
+        for f in fields:
+          provider.addAttributes([f])
+
+        final_layer.updateFields()
+
+        exp_features = expansao.getFeatures()
+        for feature in exp_features:
+          provider.addFeatures([feature])
+
+        cam_features = cameras.getFeatures()
+        for feature in cam_features:
+          provider.addFeatures([feature])
+
+        final_layer.updateExtents()
+        return final_layer
+
+    def update_cameras(self):
+        self.cameras = self.create_temp_layer('expansao', 'cameras', 'temp_cameras')
+        self.cameras_range = self.create_temp_layer('alcance_expansao', 'alcance_cameras', 'temp_alcance')
 
     def __add_feature_to_layer(self, feat_to_add, data_provider, buffer_flag, bdistance=0):
         inAttr = feat_to_add.attributes()
@@ -38,11 +68,12 @@ class CameraFinder():
         data_provider.addFeatures([outGeom])
 
     def __change_color(self, layer, R, G, B):
-        symbols = layer.rendererV2().symbols()
-        symbol = symbols[0]
-        symbol.setColor(QColor.fromRgb(R, G, B))
+        layer.rendererV2().symbols2(QgsRenderContext())[0].setColor(QColor.fromRgb(R, G, B))
         self.canvas.refresh() 
-        # self.canvas.refreshLayerSymbology(layer)
+
+    def __change_texture(self, layer):
+        layer.rendererV2().symbols2(QgsRenderContext())[0].changeSymbolLayer()
+        self.canvas.refresh() 
 
     def __create_selected_layer(self, layer, selected_cameras):
         self.selected_layer =  QgsVectorLayer('Point?crs='+self.cameras_crs, 'selected_cameras' , "memory") #3857
@@ -106,6 +137,36 @@ class CameraFinder():
         self.geometries.append(self.buffer_layer)
         self.__change_color(self.buffer_layer, 224, 224, 224)
 
+    def __select_range(self):
+        layers = self.canvas.layers()
+
+        ft_buffer = [feat for feat in self.buffer_layer.getFeatures()]
+        ft_cameras = [feat for feat in self.cameras_range.getFeatures()]
+
+        geom_intersec = [ ft_buffer[0].geometry().intersection(feat.geometry()).exportToWkt()
+                          for feat in ft_cameras ] 
+        geom_int_areas = [ ft_buffer[0].geometry().intersection(feat.geometry()).area()
+                           for feat in ft_cameras ] 
+
+        uri = "Polygon?crs=" + self.cameras_crs + "&field=id:integer""&field=area&index=yes"
+
+        self.intersections = QgsVectorLayer(uri, 
+                              'intersections', 
+                              'memory')
+
+
+        prov = self.intersections.dataProvider()
+        n = len(geom_intersec)
+        feats = [ QgsFeature() for i in range(n) ]
+        for i, feat in enumerate(feats): 
+            feat.setGeometry(QgsGeometry.fromWkt(geom_intersec[i]))
+            feat.setAttributes([i, geom_int_areas[i]])
+        prov.addFeatures(feats)
+        QgsMapLayerRegistry.instance().addMapLayer(self.intersections)
+
+        self.geometries.append(self.intersections)
+        self.__change_color(self.buffer_layer, 83, 229, 20)
+
     def create_point_aoi(self, position):
         self.area_of_interest =  QgsVectorLayer('Point?crs='+self.cameras_crs, 'buffer_point' , "memory") #3857
         data_provider = self.area_of_interest.dataProvider()
@@ -115,8 +176,13 @@ class CameraFinder():
         data_provider.addFeatures([point_feature])
         self.area_of_interest.updateExtents()
 
-    def run(self, mapPoint=None, aoi=None):
+    # 
+    def run(self, mapPoint=None, aoi=None, range=False):
         self.remove_layers()
+        if self.all_cameras:
+            self.update_cameras()
+            self.all_cameras = False
+
         if mapPoint:
             self.create_point_aoi(mapPoint)
         elif aoi:
@@ -126,11 +192,15 @@ class CameraFinder():
         distance = self.__bufferDistanceDialog()
         if distance:
             self.create_buffer(distance)
-            self.__select_cameras()
+            if not range:
+                self.__select_cameras()
+            else:
+                self.__select_range()
             self.__zoom_to_cameras()
         else:
             print("Erro: Acao cancelada ou raio de distancia informado incorretamente.")
 
-        
+
+
 
 

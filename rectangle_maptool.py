@@ -18,11 +18,16 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.layers_dict = layers_dict
         self.cameras_crs = crs
         self.camera_finder = camera_finder
+        self.type = None
+        self.point_list = []
         
     def reset(self):
         self.startPoint = self.endPoint = None
         self.isEmittingPoint = False
         self.rubberBand.reset(QGis.Polygon)
+
+    def update_type(self, aoitype):
+        self.type = aoitype
 
     def canvasPressEvent(self, e):
         self.startPoint = self.toMapCoordinates(e.pos())
@@ -30,17 +35,21 @@ class RectangleMapTool(QgsMapToolEmitPoint):
         self.isEmittingPoint = True
         self.showRect(self.startPoint, self.endPoint)
 
-    def draw_aoi(self):
-        self.area_of_interest =  QgsVectorLayer('Polygon?crs='+self.cameras_crs, 'buffer_point' , "memory")
-        provider = self.area_of_interest.dataProvider()
-        feature = QgsFeature()
-        feature.setGeometry(QgsGeometry.fromPolygon([self.point_list]))
-        provider.addFeatures([feature])
-        self.area_of_interest.updateExtents()
-        QgsMapLayerRegistry.instance().addMapLayer(self.area_of_interest)
-        self.area_of_interest.setLayerTransparency(40)
 
-        self.camera_finder.run(aoi=self.area_of_interest)
+    def draw_aoi(self):
+        if self.point_list:
+            self.area_of_interest =  QgsVectorLayer('Polygon?crs='+self.cameras_crs, 'buffer_point' , "memory")
+            provider = self.area_of_interest.dataProvider()
+            feature = QgsFeature()
+            feature.setGeometry(QgsGeometry.fromPolygon([self.point_list]))
+            provider.addFeatures([feature])
+            self.area_of_interest.updateExtents()
+            QgsMapLayerRegistry.instance().addMapLayer(self.area_of_interest)
+            self.area_of_interest.setLayerTransparency(40)
+            if self.type == 2:
+                self.camera_finder.run(aoi=self.area_of_interest)
+            else:
+                self.camera_finder.run(aoi=self.area_of_interest, range=True)
 
     def canvasReleaseEvent(self, e):
         self.isEmittingPoint = False
@@ -78,7 +87,6 @@ class RectangleMapTool(QgsMapToolEmitPoint):
             return None
         elif self.startPoint.x() == self.endPoint.x() or self.startPoint.y() == self.endPoint.y():
             return None
-
         return QgsRectangle(self.startPoint, self.endPoint)
 
     def deactivate(self):
