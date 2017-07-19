@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import sys
 import os.path
 from qgis.core import *
@@ -5,14 +8,16 @@ import vlc
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import time
+import urllib2
 
 
 class Player(QMainWindow):
     # A simple Media Player using VLC and Qt
-    def __init__(self, iface, filename):
+    def __init__(self, iface, filename, zoom_path):
         QMainWindow.__init__(self)
         self.setWindowTitle("Media Player")
         self.filename = filename
+        self.zoom_path = zoom_path
         self.iface = iface
 
         # creating a basic vlc instance
@@ -56,7 +61,6 @@ class Player(QMainWindow):
         self.zoomoutbutton = QPushButton("Zoom Out")
         self.hbuttonbox.addWidget(self.zoomoutbutton)
         self.zoomoutbutton.clicked.connect(self.ZoomOut)
-
 
         self.hbuttonbox.addStretch(1)
         self.volumeslider = QSlider(Qt.Horizontal, self)
@@ -112,19 +116,27 @@ class Player(QMainWindow):
         """
         self.mediaplayer.stop()
         self.playbutton.setText("Play")
-        print("Stopped")
 
     def ZoomIn(self):
         """Zoom in
         """
-        print("Zooming In")
-        pass
+        zoom_url = os.path.join(self.zoom_path, "zoomin")
+        print(zoom_url)
+        try:
+            test = urllib2.urlopen(zoom_url).read()
+        except:
+            pass
+        # self.mediaplayer.set_media(self.media)
         
     def ZoomOut(self):
         """Zoom out
         """
-        print("Zooming out")
-        pass
+        zoom_url = os.path.join(self.zoom_path, "zoomout")
+        print(zoom_url)
+        try:
+            test = urllib2.urlopen(zoom_url).read()
+        except:
+            pass
         
     def OpenFile(self):
         """Open a media file in a MediaPlayer

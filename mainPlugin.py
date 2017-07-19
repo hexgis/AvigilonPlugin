@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import sys
 import os.path
 from os.path import expanduser
@@ -24,8 +26,8 @@ class PluginController(QgsMapTool):
         QgsMapTool.__init__(self, iface.mapCanvas())
         self.canvas = iface.mapCanvas()
 
-        self.find_cameras_flag = False
         self.layers_dict = {}
+        self.find_cameras_flag = False 
         self.camera_finder = None
         self.rectangle_aoi = None
 
@@ -36,12 +38,12 @@ class PluginController(QgsMapTool):
         self.toolButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.iface.addToolBarWidget(self.toolButton)
 
-        self.streamAction = QAction("Visualizar Camera", self)
-        self.coordinatesAction = QAction("Visualizar Coordenadas", self)
-        self.localAction = QAction("Visualizar Localizacao", self)
-        self.infoAction = QAction("Informacoes gerais", self)
-        self.pointAction = QAction("Achar Cameras na Localizacao", self)
-        self.AOIAction = QAction("Desenhar Área de Interesse", self)
+        self.streamAction = QAction(u"Visualizar Câmera", self)
+        self.coordinatesAction = QAction(u"Visualizar Coordenadas", self)
+        self.localAction = QAction(u"Visualizar Localização", self)
+        self.infoAction = QAction(u"Informações Gerais", self)
+        self.pointAction = QAction(u"Achar Câmeras na Localização", self)
+        self.AOIAction = QAction(u"Desenhar Área de Interesse", self)
 
         self.contextMenu.addAction(self.coordinatesAction)
 
@@ -70,15 +72,15 @@ class PluginController(QgsMapTool):
         self.menu.setTitle("Avigilon")
 
         self.CameraViewerAction = QAction(QIcon(":/plugins/cameraviewer/icons/camera-viewer.png"),
-                                          "Camera Viewer Plugin", self.iface.mainWindow())
+                                          "Viualizar Câmera", self.iface.mainWindow())
         self.CameraViewerAction.setObjectName("CameraViewerAction")
         self.CameraViewerAction.setWhatsThis("Camera Viewer Plugin")
-        self.CameraViewerAction.setStatusTip("CameraViewer status tip")
+        self.CameraViewerAction.setStatusTip("Camera Viewer tip")
 
         self.CameraFinderAction = QAction(QIcon(":/plugins/cameraviewer/icons/camera-finder.png"),
-                                          "Achar cameras", self.iface.mainWindow())
-        self.CameraFinderAction.setObjectName("Camera Finder Action")
-        self.CameraFinderAction.setWhatsThis("Camera Viewer Plugin")
+                                          u"Achar câmeras: Ponto", self.iface.mainWindow())
+        self.CameraFinderAction.setObjectName("Camera Finder Plugin")
+        self.CameraFinderAction.setWhatsThis("Camera Finder Plugin")
         self.CameraFinderAction.setStatusTip("CameraFinder Status Tip")
 
         QObject.connect(self.CameraViewerAction,
@@ -107,22 +109,22 @@ class PluginController(QgsMapTool):
 
         self.CameraFinderAOIAction = QAction(
             QIcon(":/plugins/cameraviewer/icons/draw-aoi.png"),
-            u"Desenhe a area de interesse", self.iface.mainWindow())
+            u"Achar câmeras: Desenho", self.iface.mainWindow())
         self.CameraRangePontoAction = QAction(
-            QIcon(":/plugins/cameraviewer/icons/draw-aoi.png"),
-            u"Achar range de cameras: Ponto", self.iface.mainWindow())
+            QIcon(":/plugins/cameraviewer/icons/range-point.png"),
+            u"Definir alcance de câmeras: Ponto", self.iface.mainWindow())
         self.CameraRangeAoiAction = QAction(
             QIcon(":/plugins/cameraviewer/icons/draw-aoi.png"),
-            u"Achar range de cameras:: Desenho", self.iface.mainWindow())
+            u"Definir alcance de câmeras: Desenho", self.iface.mainWindow())
 
-        self.CameraFinderAOIAction.setWhatsThis(u"Desenhe a area de interesse")
+        self.CameraFinderAOIAction.setWhatsThis(u"Desenhe a área de interesse")
         self.CameraRangePontoAction.setWhatsThis(
-            u"Achar area de Interesse: Ponto")
+            u"Achar área de interesse: Ponto")
         self.CameraRangeAoiAction.setWhatsThis(
-            u"Achar area de Interesse: Ponto")
+            u"Achar área de interesse: Ponto")
 
-        finder_menu.addAction(self.CameraFinderAOIAction)
         finder_menu.addAction(self.CameraRangePontoAction)
+        finder_menu.addAction(self.CameraFinderAOIAction)
         finder_menu.addAction(self.CameraRangeAoiAction)
 
         QObject.connect(self.CameraFinderAOIAction, SIGNAL(
@@ -200,11 +202,12 @@ class PluginController(QgsMapTool):
     def startStream(self):
         #self.filename = 'rtsp://administrator:1234@192.168.0.65/defaultSecondary?streamType=u'
         self.filename = 'rtsp://administrator:1234@192.168.0.65/defaultPrimary?streamType=u'
-        zoom_in = 'http://localhost:55312/camera/zoomin'
+        zoom_path = 'http://localhost:55312/camera/'
+
         try:
             iface.player
         except AttributeError:
-            iface.player = Player(iface, self.filename)
+            iface.player = Player(iface, self.filename, zoom_path)
         iface.player.start()
 
     def coordinatesDialog(self):

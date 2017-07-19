@@ -2,5 +2,7 @@
   <qresource prefix="/plugins/cameraviewer" >
       <file>icons/camera-viewer.png</file>
       <file>icons/camera-finder.png</file>
+      <file>icons/draw-aoi.png</file>
+      <file>icons/range-point.png</file>
   </qresource>
 </RCC>

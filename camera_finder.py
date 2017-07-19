@@ -1,5 +1,6 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import sys
 import os.path
 from qgis.core import *
@@ -196,6 +197,7 @@ class CameraFinder():
                 self.__select_cameras()
             else:
                 self.__select_range()
+                self.__select_cameras()
             self.__zoom_to_cameras()
         else:
             print("Erro: Acao cancelada ou raio de distancia informado incorretamente.")
