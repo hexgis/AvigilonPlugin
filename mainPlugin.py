@@ -72,7 +72,7 @@ class PluginController(QgsMapTool):
         self.menu.setTitle("Avigilon")
 
         self.CameraViewerAction = QAction(QIcon(":/plugins/cameraviewer/icons/camera-viewer.png"),
-                                          "Viualizar Câmera", self.iface.mainWindow())
+                                          u"Visualizar câmera", self.iface.mainWindow())
         self.CameraViewerAction.setObjectName("CameraViewerAction")
         self.CameraViewerAction.setWhatsThis("Camera Viewer Plugin")
         self.CameraViewerAction.setStatusTip("Camera Viewer tip")
@@ -257,12 +257,12 @@ class PluginController(QgsMapTool):
     def find_range_pt(self):
         self.init_camera()
         self.AOI_type = 3
-        self.camera_finder.run(mapPoint=self.clicked_point, range=True)
+        self.camera_finder.run(mapPoint=self.clicked_point, is_range=True)
 
     def find_range_aoi(self):
         self.init_camera()
         self.AOI_type = 4
-        self.camera_finder.run(mapPoint=self.clicked_point, range=True)
+        self.camera_finder.run(mapPoint=self.clicked_point, is_range=True)
 
     def executeFinder(self, event):
         if event.button() == 1:

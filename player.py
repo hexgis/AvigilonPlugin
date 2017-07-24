@@ -120,23 +120,19 @@ class Player(QMainWindow):
     def ZoomIn(self):
         """Zoom in
         """
-        zoom_url = os.path.join(self.zoom_path, "zoomin")
-        print(zoom_url)
         try:
-            test = urllib2.urlopen(zoom_url).read()
+            req = urllib2.urlopen(zoom_url).read()
+            print(req)         
         except:
             pass
-        # self.mediaplayer.set_media(self.media)
-        
+
     def ZoomOut(self):
         """Zoom out
         """
         zoom_url = os.path.join(self.zoom_path, "zoomout")
         print(zoom_url)
-        try:
-            test = urllib2.urlopen(zoom_url).read()
-        except:
-            pass
+        test = os.system("curl "+ zoom_url)
+        print(test)
         
     def OpenFile(self):
         """Open a media file in a MediaPlayer
@@ -198,6 +194,6 @@ class Player(QMainWindow):
                 self.Stop()
 
     def start(self):
-        self.resize(800, 600)
+        self.resize(900, 700)
         self.PlayPause()
         self.show()
