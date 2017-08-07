@@ -1,32 +1,30 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+#! /usr/bin/python
 import sys
-import os.path
-from qgis.core import *
-import vlc
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+import os
 import time
 import urllib2
+import vlc
 
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from constants import *
 
 class Player(QMainWindow):
-    # A simple Media Player using VLC and Qt
-    def __init__(self, iface, filename, zoom_path):
-        QMainWindow.__init__(self)
+    """A simple Media Player using VLC and Qt
+    """
+    def __init__(self, filename, cameraId=None, master=None):
+        QMainWindow.__init__(self, master)
         self.setWindowTitle("Media Player")
-        self.filename = filename
-        self.zoom_path = zoom_path
-        self.iface = iface
 
         # creating a basic vlc instance
+        self.filename = filename
         self.instance = vlc.Instance()
         # creating an empty vlc media player
         self.mediaplayer = self.instance.media_player_new()
 
         self.createUI()
-        self.isPaused = False
+        self.isPaused = True
+        self.cameraId = str(cameraId)
 
     def createUI(self):
         """Set up the user interface, signals & slots
@@ -34,26 +32,31 @@ class Player(QMainWindow):
         self.widget = QWidget(self)
         self.setCentralWidget(self.widget)
 
+        # In this widget, the video will be drawn
         self.videoframe = QFrame()
         self.palette = self.videoframe.palette()
-        self.palette.setColor(QPalette.Window, QColor(0, 0, 0))
+        self.palette.setColor (QPalette.Window,
+                               QColor(0,0,0))
         self.videoframe.setPalette(self.palette)
         self.videoframe.setAutoFillBackground(True)
 
         self.positionslider = QSlider(Qt.Horizontal, self)
         self.positionslider.setToolTip("Position")
         self.positionslider.setMaximum(1000)
-        self.positionslider.sliderMoved.connect(self.setPosition)
+        self.connect(self.positionslider,
+                     SIGNAL("sliderMoved(int)"), self.setPosition)
 
         self.hbuttonbox = QHBoxLayout()
         self.playbutton = QPushButton("Play")
         self.hbuttonbox.addWidget(self.playbutton)
-        self.playbutton.clicked.connect(self.PlayPause)
+        self.connect(self.playbutton, SIGNAL("clicked()"),
+                     self.PlayPause)
 
         self.stopbutton = QPushButton("Stop")
         self.hbuttonbox.addWidget(self.stopbutton)
-        self.stopbutton.clicked.connect(self.Stop)
-        
+        self.connect(self.stopbutton, SIGNAL("clicked()"),
+                     self.Stop)
+
         self.zoominbutton = QPushButton("Zoom In")
         self.hbuttonbox.addWidget(self.zoominbutton)
         self.zoominbutton.clicked.connect(self.ZoomIn)
@@ -62,13 +65,40 @@ class Player(QMainWindow):
         self.hbuttonbox.addWidget(self.zoomoutbutton)
         self.zoomoutbutton.clicked.connect(self.ZoomOut)
 
+        self.movecambutton = QPushButton("Move Camera")
+        self.hbuttonbox.addWidget(self.movecambutton)
+        self.movecambutton.clicked.connect(self.MoveCameraMenu)
+        self.movecambutton.setCheckable(True)
+
+        self.moveupbutton = QPushButton("Up")
+        self.hbuttonbox.addWidget(self.moveupbutton)
+        self.moveupbutton.clicked.connect(self.MoveUp)
+        self.moveupbutton.hide()
+
+        self.movedownbutton = QPushButton("Down")
+        self.hbuttonbox.addWidget(self.movedownbutton)
+        self.movedownbutton.clicked.connect(self.MoveDown)
+        self.movedownbutton.hide()
+
+        self.moveleftbutton = QPushButton("Left")
+        self.hbuttonbox.addWidget(self.moveleftbutton)
+        self.moveleftbutton.clicked.connect(self.MoveLeft)
+        self.moveleftbutton.hide()
+
+        self.moverightbutton = QPushButton("Right")
+        self.hbuttonbox.addWidget(self.moverightbutton)
+        self.moverightbutton.clicked.connect(self.MoveRight)
+        self.moverightbutton.hide()
+
         self.hbuttonbox.addStretch(1)
-        self.volumeslider = QSlider(Qt.Horizontal, self)
-        self.volumeslider.setMaximum(100)
-        self.volumeslider.setValue(self.mediaplayer.audio_get_volume())
-        self.volumeslider.setToolTip("Volume")
-        self.hbuttonbox.addWidget(self.volumeslider)
-        self.volumeslider.valueChanged.connect(self.setVolume)
+        # self.volumeslider = QSlider(Qt.Horizontal, self)
+        # self.volumeslider.setMaximum(100)
+        # self.volumeslider.setValue(self.mediaplayer.audio_get_volume())
+        # self.volumeslider.setToolTip("Volume")
+        # self.hbuttonbox.addWidget(self.volumeslider)
+        # self.connect(self.volumeslider,
+        #              SIGNAL("valueChanged(int)"),
+        #              self.setVolume)
 
         self.vboxlayout = QVBoxLayout()
         self.vboxlayout.addWidget(self.videoframe)
@@ -78,9 +108,9 @@ class Player(QMainWindow):
         self.widget.setLayout(self.vboxlayout)
 
         open = QAction("&Open", self)
-        open.triggered.connect(self.OpenFile)
+        self.connect(open, SIGNAL("triggered()"), self.OpenFile)
         exit = QAction("&Exit", self)
-        exit.triggered.connect(sys.exit)
+        self.connect(exit, SIGNAL("triggered()"), sys.exit)
         menubar = self.menuBar()
         filemenu = menubar.addMenu("&File")
         filemenu.addAction(open)
@@ -89,7 +119,8 @@ class Player(QMainWindow):
 
         self.timer = QTimer(self)
         self.timer.setInterval(200)
-        self.timer.timeout.connect(self.updateUI)
+        self.connect(self.timer, SIGNAL("timeout()"),
+                     self.updateUI)
 
     def PlayPause(self):
         """Toggle play/pause status
@@ -99,14 +130,10 @@ class Player(QMainWindow):
             self.playbutton.setText("Play")
             self.isPaused = True
         else:
-            print("play")
             if self.mediaplayer.play() == -1:
                 self.OpenFile()
                 return
-            while self.mediaplayer.is_playing() == 0:
-                print(self.mediaplayer.is_playing())
-                self.mediaplayer.play()
-                time.sleep(5)
+            self.mediaplayer.play()
             self.playbutton.setText("Pause")
             self.timer.start()
             self.isPaused = False
@@ -120,8 +147,10 @@ class Player(QMainWindow):
     def ZoomIn(self):
         """Zoom in
         """
+        action_url = os.path.join(SERVER_IP, self.cameraId, ZOOM_IN)
+        print (action_url)
         try:
-            req = urllib2.urlopen(zoom_url).read()
+            req = urllib2.urlopen(action_url).read()
             print(req)         
         except:
             pass
@@ -129,19 +158,77 @@ class Player(QMainWindow):
     def ZoomOut(self):
         """Zoom out
         """
-        zoom_url = os.path.join(self.zoom_path, "zoomout")
-        print(zoom_url)
-        test = os.system("curl "+ zoom_url)
-        print(test)
-        
-    def OpenFile(self):
+        action_url = os.path.join(SERVER_IP, self.cameraId, ZOOM_OUT)
+        print (SERVER_IP)
+        try:
+            req = urllib2.urlopen(action_url).read()
+            print(req)         
+        except:
+            pass
+
+    def MoveCameraMenu(self):
+        if self.isHidden:
+            self.moveupbutton.show()
+            self.movedownbutton.show()
+            self.moveleftbutton.show()
+            self.moverightbutton.show()
+            self.movecambutton.setChecked(True)
+            self.isHidden = False
+        else:
+            self.moveupbutton.hide()
+            self.movedownbutton.hide()
+            self.moveleftbutton.hide()
+            self.moverightbutton.hide()
+            self.movecambutton.setChecked(False)
+            self.isHidden = True
+
+    def MoveUp(self):
+        action_url = os.path.join(SERVER_IP, self.cameraId, TILT_UP)
+        print (action_url)
+        try:
+            req = urllib2.urlopen(action_url).read()
+            print(req)         
+        except:
+            pass
+
+    def MoveDown(self):
+        action_url = os.path.join(SERVER_IP, self.cameraId, TILT_DOWN)
+        print (action_url)
+        try:
+            req = urllib2.urlopen(action_url).read()
+            print(req)         
+        except:
+            pass
+
+    def MoveLeft(self):
+        action_url = os.path.join(SERVER_IP, self.cameraId, PAN_IN)
+        print (action_url)
+        try:
+            req = urllib2.urlopen(action_url).read()
+            print(req)         
+        except:
+            pass
+
+    def MoveRight(self):
+        action_url = os.path.join(SERVER_IP, self.cameraId, PAN_OUT)
+        print (action_url)
+        try:
+            req = urllib2.urlopen(action_url).read()
+            print(req)         
+        except:
+            pass
+
+    def OpenFile(self, filename=None):
         """Open a media file in a MediaPlayer
         """
+        if filename is None:
+            return
+            filename = self.filename
+        if not filename:
+            return
 
         # create the media
-        if sys.version < '3':
-            filename = unicode(self.filename)
-        self.media = self.instance.media_new(filename)
+        self.media = self.instance.media_new(unicode(filename))
         # put the media in the media player
         self.mediaplayer.set_media(self.media)
 
@@ -153,21 +240,19 @@ class Player(QMainWindow):
         # the media player has to be 'connected' to the QFrame
         # (otherwise a video would be displayed in it's own window)
         # this is platform specific!
-        # you have to give the id of the QFrame (or similar object) to
-        # vlc, different platforms have different functions for this
-        if sys.platform.startswith('linux'): # for Linux using the X Server
+        if sys.platform == "linux2": # for Linux using the X Server
             self.mediaplayer.set_xwindow(self.videoframe.winId())
         elif sys.platform == "win32": # for Windows
             self.mediaplayer.set_hwnd(self.videoframe.winId())
         elif sys.platform == "darwin": # for MacOS
-            print(self.videoframe.winId())
-            self.mediaplayer.set_nsobject(int(self.videoframe.winId()))
+            self.mediaplayer.set_agl(self.videoframe.windId())
+
         self.PlayPause()
 
-    def setVolume(self, Volume):
-        """Set the volume
-        """
-        self.mediaplayer.audio_set_volume(Volume)
+    # def setVolume(self, Volume):
+    #     """Set the volume
+    #     """
+    #     self.mediaplayer.audio_set_volume(Volume)
 
     def setPosition(self, position):
         """Set the position
@@ -193,7 +278,9 @@ class Player(QMainWindow):
                 # this will fix it
                 self.Stop()
 
-    def start(self):
-        self.resize(900, 700)
-        self.PlayPause()
+
+    def start(self, isStreaming):
         self.show()
+        self.resize(900, 600)
+        if isStreaming:
+            self.OpenFile(self.filename)
